@@ -55,7 +55,7 @@
    </PIN>
    <PIN pinname="Maximum Characters" slicecount="1" values="-1">
    </PIN>
-   <PIN pinname="Input String" slicecount="1" visible="1" values="connected">
+   <PIN pinname="Input String" slicecount="1" visible="1" values="||">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="Status">
    </PIN>
@@ -123,7 +123,7 @@
    </PIN>
    <PIN pinname="Behavior" slicecount="1" values="Toggle">
    </PIN>
-   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="1">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="Connected">
    </PIN>
@@ -187,7 +187,7 @@
    </PIN>
    <PIN pinname="Rows" slicecount="1" values="12">
    </PIN>
-   <PIN pinname="Y Input Value" slicecount="12" visible="1" values="0,0,0,0,0,0,0,0,0,0,0,0">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="Input">
    </PIN>
@@ -207,7 +207,7 @@
    </PIN>
    <PIN pinname="Rows" slicecount="1" values="12">
    </PIN>
-   <PIN pinname="Y Input Value" slicecount="12" visible="1" values="0,0,1,1,1,1,0,1,1,1,1,0">
+   <PIN pinname="Y Input Value" slicecount="1" visible="1" values="0">
    </PIN>
    <PIN pinname="Descriptive Name" slicecount="1" values="|Actual Output|">
    </PIN>
@@ -369,5 +369,31 @@
    <LINK srcnodeid="12" srcpinname="Output String" dstnodeid="193" dstpinname="Remote Host">
    </LINK>
    <LINK srcnodeid="189" srcpinname="Y Output Value" dstnodeid="193" dstpinname="Do Send">
+   </LINK>
+   <NODE id="194" systemname="ProjectExplorer (VVVV)" filename="%VVVV%\lib\nodes\plugins\VVVV.Nodes.dll" nodename="ProjectExplorer (VVVV)" componentmode="InAWindow">
+   <PIN pinname="Build configuration" slicecount="1" values="Debug">
+   </PIN>
+   <PIN pinname="Hide unused projects" slicecount="1" values="1">
+   </PIN>
+   <BOUNDS type="Node" left="7530" top="5205" width="100" height="100">
+   </BOUNDS>
+   <BOUNDS type="Box" left="7530" top="5205" width="3000" height="1500">
+   </BOUNDS>
+   <BOUNDS type="Window" left="20490" top="7710" width="5340" height="8760">
+   </BOUNDS>
+   </NODE>
+   <NODE nodename="IOBox (Value Advanced)" componentmode="InABox" id="195" systemname="IOBox (Value Advanced)">
+   <BOUNDS type="Box" left="7965" top="4545" width="795" height="240">
+   </BOUNDS>
+   <BOUNDS type="Node" left="7965" top="4545" width="0" height="0">
+   </BOUNDS>
+   <PIN pinname="Units" slicecount="1" values="||">
+   </PIN>
+   <PIN pinname="Precision" slicecount="1" values="4">
+   </PIN>
+   <PIN pinname="Value Type" slicecount="1" values="Integer">
+   </PIN>
+   </NODE>
+   <LINK srcnodeid="193" srcpinname="CallbackCounter" dstnodeid="195" dstpinname="Y Input Value">
    </LINK>
    </PATCH>
