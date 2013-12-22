@@ -14,9 +14,8 @@ using System.Net.Sockets;
 
 using VVVV.Nodes.structs;
 
-using System.Text;
-
 //using System.Text;
+
 using System.Text.RegularExpressions;
 
 using System.Threading;
@@ -44,7 +43,7 @@ namespace VVVV.Nodes
 		[Input("Enabled", IsSingle = true, DefaultBoolean = false)]
 		public IDiffSpread<bool> FEnable;
 
-        [Input("Do Send", IsSingle = true, IsBang = true)]
+        [Input("Do Send", /*IsSingle = true,*/ IsBang = true)]
         public ISpread<bool> FDoSend;
 
 		[Input("Get Pin States", IsSingle = true, IsBang = true)]
@@ -92,6 +91,8 @@ namespace VVVV.Nodes
 
         private int callbackcounter = 0;
 
+        private bool[] PinsInlastState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+
 		#endregion fields & pins
 		#pragma warning restore
 
@@ -104,6 +105,10 @@ namespace VVVV.Nodes
 
             FCallbackCounter.SliceCount = 1;
 
+            for (int i = 0; i < FPinsIn.SliceCount; i++)
+            {
+                PinsInlastState[i] = FPinsIn[i];
+            }
 
             // reconnect
             if (reconnect)
@@ -112,14 +117,12 @@ namespace VVVV.Nodes
 			     {
                      reconnect = false; // avoid multiple connects
                      closeConnection();
-                     //StopClient();
                      connect();
                  }
                  else if (!FEnable[0])
                  {
                      reconnect = false;
                      closeConnection();
-                     //StopClient();
                  }
             }
 
@@ -133,17 +136,13 @@ namespace VVVV.Nodes
                     if (FConnected[0])
                     {
                         closeConnection();
-                        //StopClient();
                         firstConnect = true;
                     }
-
 					connect();
 				}
 				else
 				{
-                    if (this.TCP_Client != null)
-					    closeConnection();
-                    //StopClient();
+					closeConnection();
 					firstConnect = true;
 				}
 			}
@@ -152,66 +151,53 @@ namespace VVVV.Nodes
 			if (firstConnect && FEnable[0] && FConnected[0])
 			{
 				getPins();
-				//FOutput.AssignFrom(lastOutputPinState);
-				//FInputs.AssignFrom(lastInputPinState);
 				firstConnect = false;
 			}
 			
 			// getpinState manually
-			if (FGetState[0] && FEnable[0] && FConnected[0])
-			{
-                try
-                {
-                    getPins();
-                    //FOutput.AssignFrom(lastOutputPinState);
-                    //FInputs.AssignFrom(lastInputPinState);
-                }
-				catch(Exception e)
-                {
-                    FLogger.Log(LogType.Debug, "exception during Pin-request " + e);
-                    FStatus[0] = "Connection error. See [Renderer (TTY)]";
-                    FLogger.Log(LogType.Debug, "reconnect ...");
+            if (FGetState[0] && FEnable[0] && FConnected[0])
+            {
+                getPins();
+            }
 
-                    lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
-                    lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
-                    FConnected[0] = false;
-                    firstConnect = false;
-                    reconnect = true;
-                }
-				
-			}
-			
             // set Output Pins
-            if (FDoSend[0] && FConnected[0])
-			{
-                //if (IsConnected( this.TCP_Client))
-                //{
-                    for (int i = 0; i < 12; i++)
+            if (FDoSend.IsChanged && FConnected[0])
+            {
+                for (int i = 0; i < 12; i++)
+                {
+                    
+                    //if (sliceChanged(i))    // only send the pins that are triggered/changed
+                    if (FDoSend[i])
                     {
-                        //if (FPinsIn[i] != lastOutputPinState[i]) // dangerous if another computer has altered the pins in the meantime. rare case anyway
-                        //{
-                            if (FPinsIn[i])
-                            {
-                                setPins(i, (UInt16)1);
-                            }
-                            else
-                            {
-                                setPins(i, (UInt16)0);
-                            }
-                        //}
-                        lastOutputPinState[i] = FPinsIn[i];
-                    }
-                    getPins();
-                //}
-			}
+                        FLogger.Log(LogType.Debug, "set Pin " + i + " to " + FPinsIn[i]);
+                        //FStatus[0] = "set Pin " + i + " to " + FPinsIn[i];
 
+                        if (FPinsIn[i])
+                        {
+                            setPins(i, (UInt16)1 );
+                        }
+                        else
+                        {
+                            setPins(i, (UInt16)0 );
+                        }
+                    }
+                }
+
+                getPins();
+
+                //for (int i = 0; i < FPinsIn.SliceCount; i++)
+                //{
+                //    PinsInlastState[i] = FPinsIn[i];
+                //}
+            }
+
+
+            // set Nodes' Pins
             FOutput.AssignFrom(lastOutputPinState);
             FInputs.AssignFrom(lastInputPinState);
 
             FCallbackCounter[0] = callbackcounter;
 		}
-
-        
 
         #endregion Evaluate
 
@@ -219,7 +205,17 @@ namespace VVVV.Nodes
         //--------------------------------------------------------------------------------------------
 		// METHODS
 		//--------------------------------------------------------------------------------------------
-		
+
+        private bool sliceChanged(int i)
+        {
+            //if (FPinsIn[i] != PinsInlastState[i])
+            //    return true;
+            //else
+            //    return false;
+
+            return (FPinsIn[i] != PinsInlastState[i]);
+        }
+
 		
 		private void setPins(int outputPin, UInt16 state)
 		{
@@ -253,8 +249,8 @@ namespace VVVV.Nodes
 
                 FLogger.Log(LogType.Debug, "reconnect ...");
 
-                lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
-                lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
                 FConnected[0] = false;
                 firstConnect = false;
                 reconnect = true;
@@ -264,25 +260,41 @@ namespace VVVV.Nodes
 		
 		private void getPins()
 		{
-			structs.RegisterRequest readCmd = new structs.RegisterRequest();
-			readCmd.Start_1 = 0;
-			readCmd.Start_2 = 0;
-			readCmd.StructType = 0x21;
-			readCmd.StructLength = 8;
-			
-			byte[] sendCmd = ByteConvert.ToBytes(readCmd, typeof(structs.RegisterRequest));
-
-            if (FConnected[0] &&  this.TCP_Client.Connected)
+            try
             {
-                 this.TCP_Client.Send(sendCmd, sendCmd.Length, SocketFlags.None);
-                 this.TCP_Client.BeginReceive(receiveBuffer, 0, 512, SocketFlags.None, new AsyncCallback(callback_receive),  this.TCP_Client);
+			    structs.RegisterRequest readCmd = new structs.RegisterRequest();
+			    readCmd.Start_1 = 0;
+			    readCmd.Start_2 = 0;
+			    readCmd.StructType = 0x21;
+			    readCmd.StructLength = 8;
+			
+			    byte[] sendCmd = ByteConvert.ToBytes(readCmd, typeof(structs.RegisterRequest));
+
+                if (FConnected[0] &&  this.TCP_Client.Connected)
+                {
+                     this.TCP_Client.Send(sendCmd, sendCmd.Length, SocketFlags.None);
+                     this.TCP_Client.BeginReceive(receiveBuffer, 0, 512, SocketFlags.None, new AsyncCallback(callback_receive),  this.TCP_Client);
+                }
+
             }
+				catch(Exception e)
+                {
+                    FLogger.Log(LogType.Debug, "exception during getPins() " + e);
+                    FStatus[0] = "Connection error. See [Renderer (TTY)]";
+                    FLogger.Log(LogType.Debug, "reconnect ...");
+
+                    //lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                    //lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                    FConnected[0] = false;
+                    firstConnect = false;
+                    reconnect = true;
+                }
 		}
 		
 		
 		private void connect()
 		{
-            if (IsValidIP(FIp[0]) && IsValidPort(FPort[0]) )
+            if (isValidIP(FIp[0]) && isValidPort(FPort[0]) )
 			{
                 if (callbackcounter == 0)
                 {
@@ -345,8 +357,8 @@ namespace VVVV.Nodes
 
                 FLogger.Log(LogType.Debug, "reconnect in 2 seconds...");
 
-                lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
-                lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
                 FConnected[0] = false;
                 firstConnect = false;
                 Thread.Sleep(2000);
@@ -381,8 +393,8 @@ namespace VVVV.Nodes
 
                 FLogger.Log(LogType.Debug, "reconnect in 2 seconds...");
 
-                lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
-                lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastOutputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
+                //lastInputPinState = new bool[12] { false, false, false, false, false, false, false, false, false, false, false, false };
                 FConnected[0] = false;
                 firstConnect = false;
                 Thread.Sleep(2000);
@@ -540,6 +552,10 @@ namespace VVVV.Nodes
 			catch (Exception e)
 			{
 				FStatus[0] = "Error while disconnecting: " + e;
+
+                this.TCP_Client = null;
+                FConnected[0] = false;
+                FStatus[0] = "disconnected";
 			}
 		}
         
@@ -548,7 +564,7 @@ namespace VVVV.Nodes
         //--------------------------------------------------------------------------------------------
 
 
-        private bool IsValidIP(string addr)
+        private bool isValidIP(string addr)
         {
             string pattern = "^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
             Regex check = new Regex(pattern);
@@ -566,7 +582,7 @@ namespace VVVV.Nodes
             return valid;
         }
 
-        private bool IsValidPort(int port)
+        private bool isValidPort(int port)
         {
             if (port > 0 && port < 65553)
                 return true;
