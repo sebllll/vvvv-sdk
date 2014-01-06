@@ -44,7 +44,7 @@ namespace VVVV.Nodes
 		public IDiffSpread<bool> FEnable;
 
         [Input("Do Send", /*IsSingle = true,*/ IsBang = true)]
-        public ISpread<bool> FDoSend;
+        public IDiffSpread<bool> FDoSend;
 
 		[Input("Get Pin States", IsSingle = true, IsBang = true)]
 		public ISpread<bool> FGetState;
@@ -170,7 +170,6 @@ namespace VVVV.Nodes
                     if (FDoSend[i])
                     {
                         FLogger.Log(LogType.Debug, "set Pin " + i + " to " + FPinsIn[i]);
-                        //FStatus[0] = "set Pin " + i + " to " + FPinsIn[i];
 
                         if (FPinsIn[i])
                         {
@@ -182,13 +181,8 @@ namespace VVVV.Nodes
                         }
                     }
                 }
-
                 getPins();
 
-                //for (int i = 0; i < FPinsIn.SliceCount; i++)
-                //{
-                //    PinsInlastState[i] = FPinsIn[i];
-                //}
             }
 
 
@@ -206,15 +200,15 @@ namespace VVVV.Nodes
 		// METHODS
 		//--------------------------------------------------------------------------------------------
 
-        private bool sliceChanged(int i)
-        {
+        //private bool sliceChanged(int i)
+        //{
             //if (FPinsIn[i] != PinsInlastState[i])
             //    return true;
             //else
             //    return false;
 
-            return (FPinsIn[i] != PinsInlastState[i]);
-        }
+            //return (FPinsIn[i] != PinsInlastState[i]);
+        //}
 
 		
 		private void setPins(int outputPin, UInt16 state)
@@ -241,6 +235,7 @@ namespace VVVV.Nodes
             try
             {
                 this.TCP_Client.Send(sendCmd, sendCmd.Length, SocketFlags.None);
+                FLogger.Log(LogType.Debug, "send setPins: " + sendCmd.ToString());
             }
             catch (Exception e)
             {
@@ -273,6 +268,7 @@ namespace VVVV.Nodes
                 if (FConnected[0] &&  this.TCP_Client.Connected)
                 {
                      this.TCP_Client.Send(sendCmd, sendCmd.Length, SocketFlags.None);
+                     FLogger.Log(LogType.Debug, "send getPins: " + sendCmd.ToString());
                      this.TCP_Client.BeginReceive(receiveBuffer, 0, 512, SocketFlags.None, new AsyncCallback(callback_receive),  this.TCP_Client);
                 }
 
