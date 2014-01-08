@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
   <Import Project="..\..\Default.Plugin.Project.settings" />
   <PropertyGroup>
-    <ProjectGuid>{5B75FE99-99DD-4E4A-9F41-53B0F3EC80FA}</ProjectGuid>
+    <ProjectGuid>{1CB8DEC0-5780-4AB3-B1D5-0B01E7063DFF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>VVVV.Nodes</RootNamespace>
     <AssemblyName>Rope2d</AssemblyName>
