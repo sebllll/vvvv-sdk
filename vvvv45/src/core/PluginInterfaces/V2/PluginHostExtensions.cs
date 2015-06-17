@@ -38,6 +38,11 @@ namespace VVVV.PluginInterfaces.V2
 			{ typeof(Vector4D), Tuple.Create(double.MinValue, double.MaxValue, 0.01, false, 4) },
 			{ typeof(Matrix4x4), Tuple.Create(double.MinValue, double.MaxValue, 0.01, false, 1) },
 		};
+
+        public static void RegisterPinAttributeConfigForType(Type type, double minValue, double maxValue, double stepSize, bool isInteger, int dimensions)
+        {
+            FDefaultValues.Add(type, Tuple.Create(minValue, maxValue, stepSize, isInteger, dimensions));
+        }
 		
 		private static T NormalizePinAttribute<T>(T attribute, Type type) where T : IOAttribute
 		{
@@ -252,49 +257,61 @@ namespace VVVV.PluginInterfaces.V2
 		
 		public static IEnumConfig CreateEnumConfig(this IPluginHost host, ConfigAttribute attribute, Type type)
 		{
+		    //this creates and sets the default for a .NET enum
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 			{
 				var entries = Enum.GetNames(type);
-				var defEntry = !string.IsNullOrEmpty(attribute.DefaultEnumEntry) ? attribute.DefaultEnumEntry : entries[0];
-				host.UpdateEnum(type.FullName, defEntry, entries);
+				host.UpdateEnum(type.FullName, entries[0], entries);
 			}
 			
 			IEnumConfig result = null;
 			host.CreateEnumConfig(attribute.Name, (TSliceMode)attribute.SliceMode, (TPinVisibility)attribute.Visibility, out result);
+						
+			if(!string.IsNullOrWhiteSpace(attribute.DefaultEnumEntry))
+                result.SetDefaultEntry(attribute.DefaultEnumEntry);
+			
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 				result.SetSubType(type.FullName);
 			else
 				result.SetSubType(attribute.EnumName);
 			result.Order = attribute.Order;
+
 			return result;
 		}
 		
 		public static IEnumIn CreateEnumInput(this IPluginHost host, InputAttribute attribute, Type type)
 		{
+			//this creates and sets the default for a .NET enum
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 			{
 				var entries = Enum.GetNames(type);
-				var defEntry = !string.IsNullOrEmpty(attribute.DefaultEnumEntry) ? attribute.DefaultEnumEntry : entries[0];
-				host.UpdateEnum(type.FullName, defEntry, entries);
+				host.UpdateEnum(type.FullName, entries[0], entries);
 			}
-			
+
 			IEnumIn result = null;
 			host.CreateEnumInput(attribute.Name, (TSliceMode)attribute.SliceMode, (TPinVisibility)attribute.Visibility, out result);
+			
+			if(!string.IsNullOrWhiteSpace(attribute.DefaultEnumEntry))
+                result.SetDefaultEntry(attribute.DefaultEnumEntry);
+			
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 				result.SetSubType(type.FullName);
 			else
 				result.SetSubType(attribute.EnumName);
+			
             SetInputProperties(result, attribute);
-			return result;
+
+            return result;
 		}
 		
 		public static IEnumOut CreateEnumOutput(this IPluginHost host, OutputAttribute attribute, Type type)
 		{
+		    
+		    //this creates and sets the default for a .NET enum
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 			{
 				var entries = Enum.GetNames(type);
-				var defEntry = !string.IsNullOrEmpty(attribute.DefaultEnumEntry) ? attribute.DefaultEnumEntry : entries[0];
-				host.UpdateEnum(type.FullName, defEntry, entries);
+				host.UpdateEnum(type.FullName, entries[0], entries);
 			}
 			
 			IEnumOut result = null;
@@ -302,7 +319,8 @@ namespace VVVV.PluginInterfaces.V2
 			if (!typeof(EnumEntry).IsAssignableFrom(type))
 				result.SetSubType(type.FullName);
 			else
-				result.SetSubType(attribute.EnumName);
+				result.SetSubType(attribute.EnumName);		
+			
             SetOutputProperties(result, attribute);
 			return result;
 		}

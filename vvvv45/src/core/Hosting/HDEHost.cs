@@ -56,6 +56,7 @@ namespace VVVV.Hosting
         public DefaultLogger Logger { get; private set; }
 
         [Export(typeof(IORegistry))]
+        [Export(typeof(IIORegistry))]
         public IORegistry IORegistry { get; private set; }
         
         [Export]
@@ -130,6 +131,9 @@ namespace VVVV.Hosting
             Logger = new DefaultLogger();
 
             IORegistry = new IORegistry();
+
+            // Will tell Windows Forms that a message loop is indeed running
+            Application.RegisterMessageLoop(IsSendingMessages);
         }
 
         private HashSet<ProxyNodeInfo> LoadNodeInfos(string filename, string arguments)
@@ -151,6 +155,9 @@ namespace VVVV.Hosting
         
         public void Initialize(IVVVVHost vvvvHost, INodeBrowserHost nodeBrowserHost, IWindowSwitcherHost windowSwitcherHost, IKommunikatorHost kommunikatorHost)
         {
+            // Used for Windows Forms message loop
+            FIsRunning = true;
+
         	//set blackbox mode?
         	this.IsBlackBoxMode = vvvvHost.IsBlackBoxMode;
         	
@@ -193,26 +200,14 @@ namespace VVVV.Hosting
             //add nodes to nodes search path
             var packsDirInfo = new DirectoryInfo(Path.Combine(ExePath, "packs"));
             if (packsDirInfo.Exists)
+                LoadPackFactories(packsDirInfo, catalog);
+            // Are we inside of our repository?
+            var internalPacksDirInfo = default(DirectoryInfo);
+            if (Directory.Exists(Path.Combine(ExePath, "src")))
             {
-                AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(CurrentDomain_AssemblyResolve);
-                AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += CurrentDomain_ReflectionOnlyAssemblyResolve;
-                foreach (var packDirInfo in packsDirInfo.GetDirectories())
-                {
-                    var packDir = packDirInfo.FullName;
-                    var coreDirInfo = new DirectoryInfo(Path.Combine(packDir, "core"));
-                    if (coreDirInfo.Exists)
-                    {
-                        FAssemblySearchPaths.Add(coreDirInfo.FullName);
-                        var platformDir = IntPtr.Size == 4 ? "x86" : "x64";
-                        var platformDependentCorDirInfo = new DirectoryInfo(Path.Combine(coreDirInfo.FullName, platformDir));
-                        if (platformDependentCorDirInfo.Exists)
-                            FAssemblySearchPaths.Add(platformDependentCorDirInfo.FullName);
-                    }
-                    var factoriesDirInfo = new DirectoryInfo(Path.Combine(packDir, "factories"));
-                    if (factoriesDirInfo.Exists)
-                        catalog.Catalogs.Add(new DirectoryCatalog(factoriesDirInfo.FullName));
-                    // We look for nodes later
-                }
+                internalPacksDirInfo = new DirectoryInfo(Path.Combine(ExePath, @"..\..\vvvv45\packs"));
+                if (internalPacksDirInfo.Exists)
+                    LoadPackFactories(internalPacksDirInfo, catalog);
             }
 
             Container = new CompositionContainer(catalog);
@@ -253,14 +248,57 @@ namespace VVVV.Hosting
             //now that all basics are set up, see if there are any node search paths to add
             //from the installed packs
             if (packsDirInfo.Exists)
+                LoadPackNodes(packsDirInfo);
+            if (internalPacksDirInfo != null && internalPacksDirInfo.Exists)
+                LoadPackNodes(internalPacksDirInfo);
+        }
+
+        bool IsSendingMessages()
+        {
+            return FIsRunning;
+        }
+        bool FIsRunning;
+
+        public unsafe bool OnThreadMessage(IntPtr msgPtr)
+        {
+            // In case someone installs a filter on the Windows Forms application this way it gets properly notified about it
+            var winformsMsg = *(Message*)msgPtr.ToPointer();
+            if (Application.FilterMessage(ref winformsMsg))
+                return true;
+            return false;
+        }
+
+        private void LoadPackNodes(DirectoryInfo packsDirInfo)
+        {
+            foreach (var packDirInfo in packsDirInfo.GetDirectories())
             {
-                foreach (var packDirInfo in packsDirInfo.GetDirectories())
+                var packDir = packDirInfo.FullName;
+                var nodesDirInfo = new DirectoryInfo(Path.Combine(packDir, "nodes"));
+                if (nodesDirInfo.Exists)
+                    NodeCollection.AddJob(nodesDirInfo.FullName, true);
+            }
+        }
+
+        private void LoadPackFactories(DirectoryInfo packsDirInfo, AggregateCatalog catalog)
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(CurrentDomain_AssemblyResolve);
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += CurrentDomain_ReflectionOnlyAssemblyResolve;
+            foreach (var packDirInfo in packsDirInfo.GetDirectories())
+            {
+                var packDir = packDirInfo.FullName;
+                var coreDirInfo = new DirectoryInfo(Path.Combine(packDir, "core"));
+                if (coreDirInfo.Exists)
                 {
-                    var packDir = packDirInfo.FullName;
-                    var nodesDirInfo = new DirectoryInfo(Path.Combine(packDir, "nodes"));
-                    if (nodesDirInfo.Exists)
-                        NodeCollection.AddJob(nodesDirInfo.FullName, true);
+                    FAssemblySearchPaths.Add(coreDirInfo.FullName);
+                    var platformDir = IntPtr.Size == 4 ? "x86" : "x64";
+                    var platformDependentCorDirInfo = new DirectoryInfo(Path.Combine(coreDirInfo.FullName, platformDir));
+                    if (platformDependentCorDirInfo.Exists)
+                        FAssemblySearchPaths.Add(platformDependentCorDirInfo.FullName);
                 }
+                var factoriesDirInfo = new DirectoryInfo(Path.Combine(packDir, "factories"));
+                if (factoriesDirInfo.Exists)
+                    catalog.Catalogs.Add(new DirectoryCatalog(factoriesDirInfo.FullName));
+                // We look for nodes later
             }
         }
 
@@ -269,10 +307,9 @@ namespace VVVV.Hosting
             var assemblyName = new AssemblyName(args.Name);
             foreach (var searchPath in FAssemblySearchPaths)
             {
-                var assemblyFileName = assemblyName.Name + ".dll";
-                var assemblyLocation = Path.Combine(searchPath, assemblyFileName);
-                if (File.Exists(assemblyLocation))
-                    return Assembly.ReflectionOnlyLoadFrom(assemblyLocation);
+                foreach (var assemblyLocation in GetAssemblyLocations(searchPath, assemblyName))
+                    if (File.Exists(assemblyLocation))
+                        return Assembly.ReflectionOnlyLoadFrom(assemblyLocation);
             }
             return null;
         }
@@ -282,12 +319,17 @@ namespace VVVV.Hosting
             var assemblyName = new AssemblyName(args.Name);
             foreach (var searchPath in FAssemblySearchPaths)
             {
-                var assemblyFileName = assemblyName.Name + ".dll";
-                var assemblyLocation = Path.Combine(searchPath, assemblyFileName);
-                if (File.Exists(assemblyLocation))
-                    return Assembly.LoadFrom(assemblyLocation);
+                foreach (var assemblyLocation in GetAssemblyLocations(searchPath, assemblyName))
+                    if (File.Exists(assemblyLocation))
+                        return Assembly.LoadFrom(assemblyLocation);
             }
             return null;
+        }
+
+        IEnumerable<string> GetAssemblyLocations(string searchPath, AssemblyName assemblyName)
+        {
+            yield return Path.Combine(searchPath, assemblyName.Name + ".dll");
+            yield return Path.Combine(searchPath, assemblyName.Name + ".exe");
         }
         
         private INodeInfo GetNodeInfo(string systemName)
@@ -372,6 +414,7 @@ namespace VVVV.Hosting
         public void Shutdown()
         {
             FStartableRegistry.ShutDown();
+            FIsRunning = false;
         }
         
         public void RunRefactor()
@@ -692,7 +735,7 @@ namespace VVVV.Hosting
                 // every time.
                 if (factory is EditorFactory) return;
                 
-                if (!(info.Type == NodeType.Dynamic || info.Type == NodeType.Effect)) return;
+                if (!(info.Type == NodeType.Dynamic || info.Type == NodeType.Effect || info.Type == NodeType.VL)) return;
                 
                 // Go through all the running hosts using this changed node info
                 // and create a new plugin for them.
@@ -788,7 +831,6 @@ namespace VVVV.Hosting
         
         #endregion
 
-
         public void DisableShortCuts()
         {
             FVVVVHost.DisableShortCuts();
@@ -797,6 +839,11 @@ namespace VVVV.Hosting
         public void EnableShortCuts()
         {
             FVVVVHost.EnableShortCuts();
+        }
+        
+        public IQueryDelete FiftyEditor
+        {
+            set {FVVVVHost.FiftyEditor = value;}
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using VVVV.Core;
 using VVVV.Core.Model;
 using VVVV.PluginInterfaces.V1;
@@ -350,6 +351,14 @@ namespace VVVV.PluginInterfaces.V2
         /// Enables the short cuts of vvvv.
         /// </summary>
         void EnableShortCuts();
+        
+        /// <summary>
+        /// Reference to the 50 Editor
+        /// </summary>
+        IQueryDelete FiftyEditor
+        {
+            set;
+        }
 	}
 	#endregion IHDEHost
 	
@@ -733,7 +742,7 @@ namespace VVVV.PluginInterfaces.V2
     	/// <param name="column">The column number to move to.</param>
     	/// </summary>
     	void MoveTo(int lineNumber, int column);
-    	
+ 
     	/// <summary>
     	/// Informs the editor to close the currently opened file.
     	/// </summary>

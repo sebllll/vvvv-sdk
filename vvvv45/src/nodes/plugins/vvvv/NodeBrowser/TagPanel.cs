@@ -214,7 +214,7 @@ namespace VVVV.Nodes.NodeBrowser
                 //now that we create a text make sure not to create a comment as well
                 TagsTextBox.Text = "";
                 
-                if ((Control.ModifierKeys == Keys.Control) && ((selNode.Type == NodeType.Dynamic) || (selNode.Type == NodeType.Effect)))
+                if ((Control.ModifierKeys == Keys.Control) && (selNode.Type == NodeType.Dynamic || selNode.Type == NodeType.Effect || selNode.Type == NodeType.VL))
                     OnPanelChange(NodeBrowserPage.Clone, selNode);
                 else
                     OnCreateNode(selNode);
@@ -404,7 +404,7 @@ namespace VVVV.Nodes.NodeBrowser
 
             int y = FRichTextBox.GetPositionFromCharIndex(FRichTextBox.GetFirstCharIndexFromLine(FHoverLine)).Y;
             string tip = "";
-            if (ni.Type == NodeType.Dynamic || ni.Type == NodeType.Effect)
+            if (ni.Type == NodeType.Dynamic || ni.Type == NodeType.Effect || ni.Type == NodeType.VL)
                 tip = "Use CTRL+Enter or CTRL+Click to clone this node.\n";
             if (!string.IsNullOrEmpty(ni.Shortcut))
                 tip = "(" + ni.Shortcut + ") " ;
@@ -727,9 +727,14 @@ namespace VVVV.Nodes.NodeBrowser
                 FNodeFilter = (int) NodeType.Dynamic;
                 FTags.Remove("d");
             }
-            else if (FTags.Contains("v"))
+            else if (FTags.Contains("a"))
             {
                 FNodeFilter = (int) NodeType.VST;
+                FTags.Remove("a");
+            }
+            else if (FTags.Contains("v"))
+            {
+                FNodeFilter = (int) NodeType.VL;
                 FTags.Remove("v");
             }
             else if (FTags.Contains("."))
@@ -837,7 +842,12 @@ namespace VVVV.Nodes.NodeBrowser
                             }
                         case NodeType.VST:
                             {
-                    			e.Graphics.DrawString(" v", FRichTextBox.Font, b, DIPX(4), y-DIPY(3), StringFormat.GenericDefault);
+                    			e.Graphics.DrawString(" a", FRichTextBox.Font, b, DIPX(4), y-DIPY(3), StringFormat.GenericDefault);
+                                break;
+                            }
+                        case NodeType.VL:
+                            {
+                                e.Graphics.DrawString(" v", FRichTextBox.Font, b, DIPX(4), y-DIPY(3), StringFormat.GenericDefault);
                                 break;
                             }
                             // Added code:

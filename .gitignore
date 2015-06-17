@@ -18,6 +18,7 @@ vvvv_*.zip
 addons_*.zip
 /packages/*
 !/packages/repositories.config
-packs/
+packs/*
+!/vvvv45/packs/VLIntegration/
 _packs/
 *.sdsettings
