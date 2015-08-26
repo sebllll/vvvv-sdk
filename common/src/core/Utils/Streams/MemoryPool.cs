@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace VVVV.Utils.Streams
@@ -16,10 +17,15 @@ namespace VVVV.Utils.Streams
                 this.Array = array;
             }
 
-            public int Length { get { return Array.Length; } }
+            public int Length 
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get { return Array.Length; } 
+            }
 
             public T this[int i]
             {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get { return Array[i]; }
             }
 
@@ -60,7 +66,7 @@ namespace VVVV.Utils.Streams
 		public static void PutArray(T[] array)
 		{
             // Clear the array before putting it back (break references)
-            if (!typeof(T).IsPrimitive)
+            if (!typeof(T).IsValueType)
             {
                 Array.Clear(array, 0, array.Length);
             }

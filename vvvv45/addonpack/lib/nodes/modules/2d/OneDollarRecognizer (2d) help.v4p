@@ -1,4 +1,4 @@
-<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv45alpha33.8.dtd" >
+<!DOCTYPE PATCH  SYSTEM "http://vvvv.org/versions/vvvv50alpha33.9.dtd" >
    <PATCH nodename="C:\vvvv\git\vvvv-sdk\vvvv45\addonpack\lib\nodes\modules\2d\OneDollarRecognizer (2d) help.v4p" scrollx="0" scrolly="-360">
    <BOUNDS type="Window" left="0" top="1200" width="15930" height="13845">
    </BOUNDS>
@@ -540,7 +540,7 @@
    </LINK>
    <LINK srcnodeid="21" srcpinname="Back" dstnodeid="20" dstpinname="Input 2">
    </LINK>
-   <NODE id="19" componentmode="Hidden" systemname="GestureVisualizer" filename="%VVVV%\addonpack\lib\nodes\modules\Gesture2dDollarOne\GestureVisualizer.v4p" nodename="%VVVV%\addonpack\lib\nodes\modules\Gesture2dDollarOne\GestureVisualizer.v4p" hiddenwhenlocked="1" managers="">
+   <NODE id="19" componentmode="Hidden" systemname="GestureVisualizer" filename="%VVVV%\addonpack\lib\nodes\modules\2d\OneDollar\GestureVisualizer.v4p" nodename="%VVVV%\addonpack\lib\nodes\modules\2d\OneDollarOneDollar\GestureVisualizer.v4p" hiddenwhenlocked="1" managers="">
    <BOUNDS type="Node" left="5490" top="10965" width="0" height="0">
    </BOUNDS>
    <BOUNDS type="Box" left="5490" top="10965" width="5800" height="7615">
@@ -580,7 +580,7 @@
    <LINKPOINT x="5910" y="2730">
    </LINKPOINT>
    </LINK>
-   <NODE systemname="DrawingVisualizer" filename="%VVVV%\addonpack\lib\nodes\modules\Gesture2dDollarOne\DrawingVisualizer.v4p" nodename="%VVVV%\addonpack\lib\nodes\modules\Gesture2dDollarOne\DrawingVisualizer.v4p" componentmode="Hidden" id="18" hiddenwhenlocked="1">
+   <NODE systemname="DrawingVisualizer" filename="%VVVV%\addonpack\lib\nodes\modules\2d\OneDollar\DrawingVisualizer.v4p" nodename="%VVVV%\addonpack\lib\nodes\modules\2d\OneDollar\DrawingVisualizer.v4p" componentmode="Hidden" id="18" hiddenwhenlocked="1">
    <BOUNDS type="Node" left="8460" top="10965" width="3240" height="270">
    </BOUNDS>
    <BOUNDS type="Box" left="8460" top="10965" width="6055" height="4840">
@@ -765,7 +765,7 @@
    </BOUNDS>
    <BOUNDS type="Box" left="780" top="4755" width="3600" height="2130">
    </BOUNDS>
-   <PIN pinname="Input String" visible="0" slicecount="1" values="|Draw gesture templates on the blank area of the renderer (Your gestures will be visualized in the top area. Note that DollarOne interally resamples, scales and rotates them). &cr;&lf;&cr;&lf;You can delete the last drawn gesture by pressing &quot;Backspace&quot; on the keyboard or the right mousebutton.|">
+   <PIN pinname="Input String" visible="0" slicecount="1" values="|Draw gesture templates on the blank area of the renderer (Your gestures will be visualized in the top area. Note that OneDollarRecognizer interally resamples, scales and rotates them). &cr;&lf;&cr;&lf;You can delete the last drawn gesture by pressing &quot;Backspace&quot; on the keyboard or the right mousebutton.|">
    </PIN>
    <PIN pinname="Output String" visible="0">
    </PIN>
